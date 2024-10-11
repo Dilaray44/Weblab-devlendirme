@@ -1,46 +1,125 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Hesap Makinesi</title>
-        <link rel="stylesheet" href="style.css">
-        <h1> DİLARA YAVUZ</h1>
-        <p>"Hello, I've been travelin' in the deserts of my mind.
-            And I haven't found a drop of life,
-            I haven't found a drop of You,
-            I haven't found a drop,
-            I haven't found a drop of water." -TØP  NOT: Maalesef yeni tuşların fonksiyonlarını yazmaya uğraştım ama çalışmadı.. </p>
-    </head>
-    <body>
-        <div class="calculator">
-            <input type="text" id="display" disabled>
-            <div class="buttons">
-                <button class="btn" onclick="clearDisplay()">C</button>
-                <button class="btn" onclick="appendToDisplay('%')">%</button>
-                <button class="btn" onclick="appendToDisplay('√')">√</button>
-                <button class="btn" onclick="appendToDisplay('x²')">x²</button>
-                <button class="btn" onclick="appendToDisplay('/')">/</button>
-                <button class="btn" onclick="appendToDisplay('7')">7</button>
-                <button class="btn" onclick="appendToDisplay('8')">8</button>
-                <button class="btn" onclick="appendToDisplay('9')">9</button>
-                <button class="btn" onclick="appendToDisplay('*')">*</button>
-                <button class="btn" onclick="appendToDisplay('4')">4</button>
-                <button class="btn" onclick="appendToDisplay('5')">5</button>
-                <button class="btn" onclick="appendToDisplay('6')">6</button>
-                <button class="btn" onclick="appendToDisplay('+')">+</button>
-                <button class="btn" onclick="appendToDisplay('1')">1</button>
-                <button class="btn" onclick="appendToDisplay('2')">2</button>
-                <button class="btn" onclick="appendToDisplay('3')">3</button>
-                <button class="btn" onclick="appendToDisplay('-')">-</button>
-                <button class="btn" onclick="appendToDisplay('.')">.</button>
-                <button class="btn" onclick="appendToDisplay('0')">0</button>
-                <button class="btn" onclick="appendToDisplay('=')">=</button>
-                
-                
-
-                
-            </div>  
-
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Radar</title>
+    <link rel="stylesheet" href="styles.css"> <!-- CSS dosyanız -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script> <!-- Axios kütüphanesi -->
+</head>
+<body>
+    <div class="container">
+        <h1>Get ready to catch up! Welcome to Report Radar..</h1>
+        <div class="top-buttons">
+            <button id="favorites-btn">Favourites</button>
+            <input type="text" id="search-input" placeholder="Search news">
+            <button id="search-btn" onclick="searchNews()">Search</button>
         </div>
-        <script src="app.js"></script>
-    </body>
+        <select id="category" onchange="fetchNews()">
+            <option value="general">General</option>
+            <option value="business">Business</option>
+            <option value="entertainment">Fun</option>
+            <option value="health">Health</option>
+            <option value="science">Science</option>
+            <option value="sports">Sport</option>
+            <option value="technology">Technology</option>
+        </select>
+        
+        <div id="news-list" class="news-list"></div>
+
+        <div class="pagination">
+            <button id="prev-btn" onclick="changePage(-1)">Previous page</button>
+            <button id="next-btn" onclick="changePage(1)">Next page </button>
+        </div>
+
+        <div class="quote-section">
+            <h2>The Quote of the Day:</h2>
+            <p>"The best and most beautiful things in the world cannot be seen or even touched - they must be felt with the heart." -Helen Keller</p>
+            <h2>The Song of the Day:</h2>
+            <p>"Pink skies" – Zach Bryan</p>
+            <h2>The Book of the Day:</h2>
+            <p>"Yasamak" - Cahit Zarifoglu </p>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = 'fc3ccf2d73d6400cb6d9dacbd2fa6b22'; // Buraya API anahtarını ekle
+        let currentPage = 1;
+        let totalResults = 0;
+        const pageSize = 5;
+
+        async function fetchNews() {
+            const category = document.getElementById('category').value;
+            const url = `https://newsapi.org/v2/top-headlines?category=${category}&country=us&pageSize=${pageSize}&page=${currentPage}&apiKey=${apiKey}`;
+            
+            try {
+                const response = await axios.get(url);
+                const articles = response.data.articles;
+                totalResults = response.data.totalResults;
+                const newsList = document.getElementById('news-list');
+                newsList.innerHTML = ''; // Listeyi temizle
+
+                articles.forEach(article => {
+                    const card = document.createElement('div');
+                    card.classList.add('news-card');
+                    card.innerHTML = `
+                        <h2>${article.title}</h2>
+                        <p>${article.description}</p>
+                        <a href="${article.url}" target="_blank" rel="noopener noreferrer">Devamını oku</a>
+                    `;
+                    newsList.appendChild(card);
+                });
+
+                updatePagination();
+            } catch (error) {
+                console.error('Haberleri çekerken bir hata oluştu:', error);
+            }
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            fetchNews();
+        }
+
+        function updatePagination() {
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage * pageSize >= totalResults;
+        }
+
+        function searchNews() {
+            const query = document.getElementById('search-input').value;
+            const url = `https://newsapi.org/v2/everything?q=${query}&pageSize=${pageSize}&page=${currentPage}&apiKey=${apiKey}`;
+            // Arama sonuçlarını getir
+            axios.get(url)
+                .then(response => {
+                    const articles = response.data.articles;
+                    totalResults = response.data.totalResults;
+                    const newsList = document.getElementById('news-list');
+                    newsList.innerHTML = ''; // Listeyi temizle
+
+                    articles.forEach(article => {
+                        const card = document.createElement('div');
+                        card.classList.add('news-card');
+                        card.innerHTML = `
+                            <h2>${article.title}</h2>
+                            <p>${article.description}</p>
+                            <a href="${article.url}" target="_blank" rel="noopener noreferrer">Devamını oku</a>
+                        `;
+                        newsList.appendChild(card);
+                    });
+
+                    updatePagination();
+                })
+                .catch(error => {
+                    console.error('Haberleri ararken bir hata oluştu:', error);
+                });
+        }
+
+        // Sayfa yüklendiğinde haberleri çek
+        window.onload = fetchNews;
+    </script>
+</body>
 </html>
+
+
+
